@@ -1,0 +1,196 @@
+---
+title: "GarciaFinal728"
+author: "Devon Garcia"
+date: "5/13/2020"
+output: html_document
+---
+
+
+## Final Project {.tabset}
+
+
+### Introduction
+
+
+There are cities throughout the world that have high populous counts and there are datasets that record such events throughout human history. The main dataset that I chose to use for this project was the 'urban_agglormeration' dataset from the spData package. This dataset contains the population of the world's most populous cities throughout the world starting from 1950s all the way to present time, and also predicting the population for the most populous cities up until 2050. The original thought for this project was to look through the population counts and try to do some sort of mapping on how the most populous cities have changed, but I had changed the topic to something more robust/thorough. So I decided to look through the amount of urban landcover for countries that contain the most populous cities for 2010. This could give us a glimpse about how the countries are in terms of urban landcover, as well as try to show the relationship of how some countries are in terms of landcover usage. My thought about using this dataset was to show that there are countries that have highly populous countries that are concentrated in one region which will show that there is low urban landcover while having one of the most populous cities. My underlying assumptions is that more developed countries that have highly populous cities will have higher urban landcover as compared to developing countries that just happen to have high concentrations of people in one city. This project utilizes visualization that are possible by using certain packages and techniques in order to flesh out and give some sort of idea of how highly populated cities are distributed along with the urban landcover of the countries that they lie within. The tests that I am going to perform on all of the datasets will be to create two maps, one showing the spatial distribution of the most populous cities throughout the world. The second map being one that showing the urban landcover for each of the countries that contain cities with the highest populations in 2010 after joining the world dataset with urban landcover of the world. The last graphical representation that will be done shows the relationship of urban landcover throughout the countries that are used within this project. As well as grouping together the continents that the countries fall within to show where the most populous cities come from throughout the world. 
+
+
+### This code utilizes the following packages and data:
+
+These are the packages that I will be utilizing within the tutorial, but they are all loaded through 'p_load()' via the 'pacman' package
+
+- install.packages("sp")
+
+- install.packages("spData")
+
+- install.packages("dplyr")
+
+- install.packages("pacman")
+
+- install.packages("sf")
+
+- install.packages("tidyverse")
+
+- data("urban_agglomerations")
+
+- data("world")
+
+
+
+### Data Exploration
+
+This Project goes over the exploration and usage of the 'urban_agglomeration' spData set and combines it with the world geometry sf in order to make it look more presentable. 
+
+The first thing that is done is exploring the data for what we are going to use, so I have chosen to show the structure of the dataset, and all the unique values within the 'urban_agglomeration' dataset. Exploring the dataset is important thing to do before even working with it in order to get a feel for what you're getting into. There are some datasets that contain 'NA' values which can be detrimental to later usage, so being aware of such value would be necessary and saved me from getting headaches later on down when working on assignments or other datasets. 
+```{r dataexp}
+library(pacman)
+p_load(sp, spData, dplyr, sf, tidyverse)
+
+
+# Structure of Urban Agglomerations dataset from spData
+str(urban_agglomerations)
+
+#Unique Years for datasets
+unique(urban_agglomerations$year)
+
+#Unique Countries within dataset
+unique(urban_agglomerations$country_or_area)
+
+#Unique Cities within dataset
+unique(urban_agglomerations$urban_agglomeration)
+
+
+
+```
+
+### Visualization of Datasets
+
+The next thing we are going to do in this tutorial is look through the geometry of each of the files and datasets we are using within this tutorial by utilizing the 'st_geometry()' command in order to graphical show the dataset.
+
+```{r 1}
+library(pacman)
+#Plot of the geometry of world dataset
+plot(st_geometry(urban_agglomerations))
+
+```
+
+
+
+```{r 2}
+library(pacman)
+#Plot of the geometry of world dataset
+plot(st_geometry(world))
+
+```
+
+Now that we know how to properly show the geometry of each file, let's try to combine the two plots which is what we are going to do as follows. The plot() function is used here to create a basic map of the geometric shape of both the urban_agglomeration dataset and world data and overlaying each other to show the spatial distribution of the most populous cities in the world for 2010. The st_geometry function is used in this chunk to acquire both of the geometric shapes of each dataset. 
+
+```{r mapping}
+library(pacman)
+
+#Code chunk that plots the world dataset with the urban_agglomerations dataset
+plot(st_geometry(urban_agglomerations), pch="+", col="red")
+plot(st_geometry(world), add=T)
+
+```
+
+Wow, doesn't that look nice? Now to add some more complexity and depth into this plot. We are going to add some data into our world sf file in order to show some trends throughout the countries with high urban agglomeration. 
+
+### Adding Data to World sf File
+
+First, we are going to read in the csv file of the desired dataset. The one I have chosen for this is 'urbanland.csv' that shows urban land coverage at the country level, as well as exploring what is within the csv file using head()
+```{r 3}
+library(pacman)
+
+#Reads in csv file for landcover
+urban<- read.csv("urbanland.csv", stringsAsFactors = FALSE)
+
+head(urban)
+
+```
+
+Though I had to clean up the file itself within excel. There are only 3 years worth of data. This tutorial is going to focus on the 2010 data. What we are going to do next is to separate the countries within the csv file from the countries that appear in the urban_agglomeration dataset for the year of 2010. The code will show a red 'x' next to the line of code where we filter out the countries because of the character associated with the feature. This is not an issue and will not throw any problems with the code, but it's something that can also mean that there is a problem with that line so please check it before running it through. 
+
+```{r 4}
+library(pacman)
+
+#Filter of countries that are highest populated
+urb_name <- urban %>%
+  filter(urban$ï..Country.Name %in% c("Argentina","Bangladesh", "Brazil", "China", "Colombia", "Democratic Republic of the Congo", "Egypt", "France", "India", "Indonesia", "Japan", "Mexico", "Nigeria", "Pakistan", "Philippines", "Russian Federation", "Turkey", "United States" ))
+
+#Checking structure of the new variable
+str(urb_name)
+
+```
+
+Now that we have our data organized into the countries we want; we are going to join this data into the 'world' dataset so we can properly display the data on a map. Using the 'left_join' method, we have joined the data from our landcover dataset to the world dataset within R. This is a technique used when you want to join two datasets together, this is very important in this project and almost every project that deals with two datasets. It requires that both datasets contain a similar field that can be joined together. The field that I joined my two datasets together by is 'name_long' and 'ï..Country.Name'. These fields being ones that contain the names of the countries within each dataset. 
+
+```{r 5}
+library(pacman)
+
+#Joining urban landcover data to world dataset
+nworld<- left_join(world, urb_name, by = c("name_long" = "ï..Country.Name"))
+
+str(nworld)
+```
+
+As we can see from checking the structure of the dataset that we successfully joined the dataset together with the world sf file. Now we display it! The usage for ggplot helps with the visualization of the data as compared to using just the plot method. This method of visualization adds more ease in displaying the data as well as making it more visually pleasing. As the plot() method just gives us basic plots, ggplot() gives us more design options for not only the map but for the labels. This method lets us change the whole theme of the map, and the ability to subset more data within the map with ease. This method was chosen because of the ease of access and methods used to add detail to the maps.
+
+```{r 6}
+library(pacman)
+
+#Creation of map that displays each country with urban landcover
+ggplot() + 
+  geom_sf(data = nworld, aes(fill = X2010), alpha = 0.7, col = "white") +
+  labs(fill= "Urban Land Cover 2010") +
+  theme_bw()
+
+
+```
+
+
+### Exploratory Data for Land cover
+
+After getting the dataset to join to the world set, the next step for my project would be to separate the countries that I want to focus on for urban landcover. This is done using the dplyr package as seen below. This method is easier to follow than just using base R in my personal opinion. Though there are ways to just use the array numbers to extract the right countries that I want, I wanted to be sure I was getting the correct countries by hand typing their strings into the filter. 
+```{r 7}
+library(pacman)
+
+#Filters out the countries we want to look at 
+cworld <- nworld %>%
+  filter(nworld$name_long %in% c("Argentina","Bangladesh", "Brazil", "China", "Colombia", "Democratic Republic of the Congo", "Egypt", "France", "India", "Indonesia", "Japan", "Mexico", "Nigeria", "Pakistan", "Philippines", "Russian Federation", "Turkey", "United States" ))
+
+head(cworld)
+```
+
+The next step I wanted to do was to separate the data that I wanted to display by selecting the columns from the data that I thought was necessary. This utilized the dplyr package as well due to the same reasons as we used above.  It looks much cleaner and easier to follow using the piping method that dplyr utilizes. I only wanted to select the name of the countries, continent, and urban landcover associated with each country. 
+
+```{r 8}
+library(pacman)
+
+#Filter for columns we want to graphically compare
+cworld2010<- cworld %>%
+  select(name_long, continent, X2010)
+cworld2010
+
+```
+
+This next section is a simple point graph that shows the distribution of urban landcover throughout the selected countries, as well as categorizing them by continent. This really shows the relationship of countries with highly populated cities and their total urban landcover. 
+
+```{r 9}
+library(pacman)
+
+#Point plot that shows the relationship of each country's urban landcover
+ggplot(data=cworld2010) +
+  geom_point(mapping = aes(x = name_long, y = X2010, color = continent)) +
+  ggtitle("Urban Land Cover 2010") +
+  xlab("Country Names") +
+  ylab("Urban Land Cover(sq. mi.)") +
+  theme(axis.text.x = element_text(angle = 90, hjust =1))
+
+
+```
+
+### Conclusion/Thoughts
+
+After running the tests that I had planned to run on this dataset, as well as visualizing the datasets in multiple ways. It shows that most countries that contain highly populous cities have strangely distributed urban landcover. Seeing as the United States has the highest urban landcover, as expected, mainly due to how developed the country is as a whole. Surprisingly France has a lower urban landcover to some other countries because of how powerful the economy is for France as compared to the other countries. Though a country such as China, though highly populated as a whole has a lower urban landcover as compared to the United States. This may be due to how the population is distributed throughout the country. There is also the observation that there are more highly populated areas within Asia than any other continent according  to the dataset that I have used for this project. The usage of ggplot() and plot() have two separate utilizations within this project, I had used the plot() method for more of a geometric usage rather than displaying a lot of data as compared to the usage of ggplot() which was strictly used for data visualization and map creation. The overall outcome of this project was rather interesting though there are some more exploration methods that I could have used to flesh out more relationships with countries that have the highest populous cities throughout the world. After thinking about some of the processes that could have been adding, maybe something along the lines of trying to do some sort of analysis over the amount of urban landcover compared to the amount of land per country that has the highest populous cities throughout the world would also show some relationship to look at and compare between each of them. Though this data does suggest that there is a relationship between country size and urban landcover as well as showing the countries with highest populated cities throughout the world. Another thought or problem that I had occur during this project was the scale bars not properly displaying the exact numbers (ie: 80,000) instead it displayed '8e+05' I could not find how to get this problem to change without completely running into errors, so I left it as it was for the sake of my sanity. But having some sort of method in order to make the legend cleaner when during the map visualization process would make the image more concise and increase readability.
+
